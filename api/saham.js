@@ -9,16 +9,33 @@ export default async function handler(req, res) {
         );
 
         const json = await response.json();
+
+        if(!json.quoteSummary || !json.quoteSummary.result){
+            return res.status(200).json({ error: "Saham tidak ditemukan." });
+        }
+
         const result = json.quoteSummary.result[0];
 
-        const price = result.price.regularMarketPrice.raw;
-        const eps = result.defaultKeyStatistics.trailingEps.raw;
-        const growth = result.financialData.earningsGrowth.raw * 100;
+        const price = result?.price?.regularMarketPrice?.raw;
+        const eps = result?.defaultKeyStatistics?.trailingEps?.raw;
+
+        // Kalau EPS tidak ada
+        if(!price || !eps){
+            return res.status(200).json({ 
+                error: "EPS tidak tersedia untuk saham ini." 
+            });
+        }
+
+        let growth = 10; // default asumsi 10%
+
+        if(result?.financialData?.earningsGrowth?.raw){
+            growth = result.financialData.earningsGrowth.raw * 100;
+        }
 
         const per = price / eps;
         const fairPrice = eps * growth;
 
-        let status = "";
+        let status = "WAJAR";
 
         if(price > fairPrice*1.2){
             status = "SANGAT MAHAL";
@@ -26,8 +43,6 @@ export default async function handler(req, res) {
             status = "MAHAL";
         } else if(price < fairPrice*0.8){
             status = "MURAH";
-        } else {
-            status = "WAJAR";
         }
 
         res.status(200).json({
@@ -40,6 +55,6 @@ export default async function handler(req, res) {
         });
 
     } catch (error) {
-        res.status(500).json({ error: "Data tidak tersedia." });
+        res.status(200).json({ error: "Terjadi error mengambil data Yahoo." });
     }
 }
