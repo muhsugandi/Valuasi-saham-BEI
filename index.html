@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Auto Valuasi Saham BEI</title>
+</head>
+<body>
+
+<h2>Auto Valuasi Saham Indonesia</h2>
+
+<input type="text" id="symbol" placeholder="Contoh: BBCA">
+<button onclick="analisa()">Analisa</button>
+
+<div id="output"></div>
+
+<script>
+async function analisa(){
+
+    let symbol = document.getElementById("symbol").value.toUpperCase();
+    const output = document.getElementById("output");
+
+    if(!symbol){
+        output.innerHTML = "Masukkan kode saham.";
+        return;
+    }
+
+    output.innerHTML = "Mengambil data...";
+
+    const res = await fetch(`/api/saham?symbol=${symbol}`);
+    const data = await res.json();
+
+    if(data.error){
+        output.innerHTML = data.error;
+        return;
+    }
+
+    output.innerHTML = `
+    Harga: ${data.price}<br>
+    EPS: ${data.eps}<br>
+    PER: ${data.per}<br>
+    Growth: ${data.growth}%<br>
+    Fair Price: ${data.fairPrice}<br>
+    Status: <b>${data.status}</b>
+    `;
+}
+</script>
+
+</body>
+</html>
